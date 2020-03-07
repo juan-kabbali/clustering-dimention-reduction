@@ -47,14 +47,12 @@ eig.val
 fviz_eig(res.pca, addlabels = TRUE, ylim = c(0,20))
 
 
-
 ### Obtenir les vars des dimentions du PCA
 #   * coord
 #   * cor
 #   * cos2
 #   * contrib 
 var = get_pca_var(res.pca)
-
 
 
 ### Analyse par rapport aux variables - Dimension 1
