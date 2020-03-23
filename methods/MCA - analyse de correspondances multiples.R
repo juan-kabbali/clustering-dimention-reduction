@@ -5,23 +5,42 @@ library("factoextra")
 library("corrplot")
 
 
-### Define our gradient colors
+### Definir les couleurs gradient 
 grt.clrs = c("green","blue","red")
 
 
 ### Importation de donnees.
-#   - Chaque etudiant est une ligne
-d = read.csv2('assets/student-mat.csv', sep = ";", header = TRUE)
+#   - Chaque ligne est un patient
+d = readxl::read_xlsx('assets/diagnosis.xlsx')
+row.names(d) = d$id_patient
 head(d)
 str(d)
 
-
 ### Selectioner les vars actives.
-#   - G3 sont des vars suplementaires car ils dependent des autres vars
-d.active.names = c("school", "sex", "address", "famsize", "Pstatus", "Mjob", "Fjob", "reason", "guardian",
-                   "schoolsup", "famsup", "paid", "activities", "nursery", "higher", "internet", "romantic", "G3");
+#   - Temperature c'est suplementaire
+d.active.names = c("temperature", "nausea", "lumbar-pain", "urine-pushing", "micturition-pains",
+                   "burning-urethra", "inflammation-urinary-bladder", "nephritis-renal-pelvis-origin")
 d.active = d[, d.active.names]
-str(d.active)
+
+
+#d.active$Cruise[d.active$Cruise == 0] = "no"
+#d.active$Cruise[d.active$Cruise == 1] = "yes"
+#d.active$Sound[d.active$Sound == 0] = "no"
+#d.active$Sound[d.active$Sound == 1] = "yes"
+#d.active$Leather[d.active$Leather == 0] = "no"
+#d.active$Leather[d.active$Leather == 1] = "yes"
+#d.active[, c("Cruise", "Sound", "Leather")] = as.factor(d.active[, c("Cruise", "Sound", "Leather")])
+#d.active$wife.age[d.active$wife.age >= 15 & d.active$wife.age < 20] = "15-19"
+#d.active$wife.age[d.active$wife.age >= 20 & d.active$wife.age < 25] = "20-24"
+#d.active$wife.age[d.active$wife.age >= 25 & d.active$wife.age < 30] = "25-29"
+#d.active$wife.age[d.active$wife.age >= 30 & d.active$wife.age < 35] = "30-34"
+#d.active$wife.age[d.active$wife.age >= 35 & d.active$wife.age < 40] = "35-39"
+#d.active$wife.age[d.active$wife.age >= 40 & d.active$wife.age < 45] = "40-44"
+#d.active$wife.age[d.active$wife.age >= 45 & d.active$wife.age <= 50] = "45-50"
+#for (col in colnames(d.active)){
+#  d.active[[col]] = as.factor(d.active[[col]])
+#}
+#d.active$contraceptive.method.used = as.integer(d.active$contraceptive.method.used)
 
 
 ###########################################################################
@@ -29,8 +48,8 @@ str(d.active)
 #   * d.actives   = jeu de données
 #   * scale.unit  = si TRUE les données sont standardisées 
 #   * ncp         = nombre de dimensions affichés
-#   * quanti.sup  = on utilise G1 G2 et G3
-res.mca = MCA(d.active, graph = TRUE, ncp = 5, quanti.sup = 18)
+#   * quanti.sup  = on utilise temperature
+res.mca = MCA(d.active, graph = TRUE, ncp = 5, quanti.sup = 1)
 res.mca
 
 
@@ -39,14 +58,14 @@ eig.val = get_eigenvalue(res.mca)
 eig.val
 
 
-### Graphique des valeurs propres avec la fonction
-fviz_eig(res.mca, addlabels = TRUE, ylim = c(0, 10))
+### Graphique des valeurs propres
+fviz_eig(res.mca, addlabels = TRUE, ylim = c(0, 40))
 
 
 ### Visualisation des
 #    * individus -- points
 #    * modalites -- triangles
-fviz_mca_biplot (res.mca, repel = TRUE)
+fviz_mca_biplot (res.mca, repel = TRUE, select.ind = list(cos2 = 80))
 
 
 ### Visualisation de la correlation des variables avec les axes
@@ -64,27 +83,24 @@ ind = get_mca_ind(res.mca)
 
 ###########################################################################
 ### Analyse par rapport aux profiles lignes - Dimension 1
-#   - cote + 
-#   - cote - les autres
-coord.dim_1   = ind$coord[,1]
-cor.dim_1     = ind$cor[,1]
-cos2.dim_1    = ind$cos2[,1]
-contrib.dim_1 = ind$contrib[,1]
-display.dim_1 = cbind(coord.dim_1, contrib.dim_1, cos2.dim_1, cor.dim_1)
+#   - cote - met en evidence les profile lignes 3, 6, 8, 12, 13, 15, 16, 20, 23, 29, 33, 35, 38, 41, 42, 51, 53, 58, 1
+#   - cote + les autres
 
-
-### Visualisation des profiles lignes selon leurs cos2
-fviz_mca_ind(res.mca, col.var = 'cos2', gradient.cols = grt.clrs, repel = TRUE)
+coord         = ind$coord[,1]
+cor           = ind$cor[,1]
+cos2          = ind$cos2[,1]
+contrib       = ind$contrib[,1]
+display       = cbind(coord, contrib, cos2, cor)
 
 
 ### Visualisation du Cos2 et Contribution des variables sur l'axe 1
-fviz_cos2(res.mca, choice = "ind", axes = 1, top = 30)
-fviz_contrib(res.mca, choice = "ind", axes = 1, top = 30)
+fviz_cos2(res.mca, choice = "ind", axes = 1, top = 50)
+fviz_contrib(res.mca, choice = "ind", axes = 1, top = 50)
 
 
 ###########################################################################
 ### Analyse par rapport aux profiles lignes - Dimension 2
-#   - cote + 
+#   - cote + 76, 77, 82, 88, 92, 96, 104, 109, 113, 118
 #   - cote - les autres
 coord.dim_2   = ind$coord[,2]
 cor.dim_2     = ind$cor[,2]
@@ -101,6 +117,10 @@ fviz_contrib(res.mca, choice = "ind", axes = 2, top = 30)
 ### Visualisation du Cos2 et Contribution des profiles lignes sur les axes 1 et 2
 fviz_cos2(res.mca, choice = "ind", axes=1:2, top = 30)
 fviz_contrib(res.mca, choice = "ind", axes=1:2, top = 30)
+
+
+### representation bidimentionnelles des profiles lignes selon leurs cos2
+fviz_mca_ind(res.mca, col.var = 'cos2', gradient.cols = grt.clrs, repel = TRUE)
 
 
 ###########################################################################
@@ -156,7 +176,7 @@ corrplot(var$contrib, is.corr=FALSE)
 
 
 ### Visualisation des variables selon leurs cos2
-fviz_pca_ind(res.mca, select.ind = list(cos2 = 30), pointsize = "cos2", col.ind = 'cos2', gradient.cols = grt.clrs, repel = TRUE)
+fviz_pca_ind(res.mca, select.ind = list(cos2 = 100), pointsize = "cos2", col.ind = 'cos2', gradient.cols = grt.clrs, repel = TRUE)
 fviz_pca_ind(res.mca, select.ind = list(contrib = 40), pointsize = "contrib", col.ind = 'contrib', gradient.cols = grt.clrs, repel = TRUE)
 
 
